@@ -1,0 +1,33 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}
+    Log In • Auctions
+{% endblock %}
+
+{% block body %}
+
+    <h2>Log In</h2>
+
+    {% if message %}
+        <div class="alert alert-danger d-inline-block" role="alert">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form action="{% url 'login' %}" method="post">
+        {% csrf_token %}
+        <div class="form-floating mb-3">
+            <input autofocus class="form-control" type="text" name="username" placeholder="Username">
+            <label for="username">Username</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input class="form-control" type="password" name="password" placeholder="Password">
+            <label for="passowrd">Password</label>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <input class="btn btn-primary" type="submit" value="Login">
+    </form>
+    <br>
+    Don't have an account? <a href="{% url 'register' %}">Register</a>
+
+{% endblock %}

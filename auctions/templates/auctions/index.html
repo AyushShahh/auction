@@ -1,0 +1,83 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block body %}
+    {% if category %}
+        {% if message %}
+            <div class="alert alert-danger d-inline-block" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <h2 class="text-center"><u>Categories</u></h2>
+
+        <div class="d-flex justify-content-center">
+            <ul class="nav justify-content-center w-50">
+                {% for c in categories %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'category' c.id%}">{{ c.name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <br>
+    {% endif %}
+    
+    <h2>{{ heading }}</h2>
+    {% if listings %}
+        {% load humanize %}
+
+        {% for listing in listings %}
+            <div class="card my-3">
+                {% if listing.image %}
+                    <div class="row g-0">
+                        <div class="col-md-4 d-flex justify-content-center align-items-center">
+                            <img src="{{ listing.image }}" class="img-fluid rounded" alt="{{ listing.description }}">
+                        </div>
+                        <div class="col-md-8">
+                {% else %}
+                    <div class="card-header">
+                        This listing does not contain any image.
+                    </div>
+                {% endif %}
+                            <div class="card-body" style="margin-left: 15px;">
+                                <h5 class="card-title" style="text-decoration: underline 2px solid black;">{{ listing.title }}</h5>
+                                <p class="card-text">{{ listing.description }}</p>
+
+                                <p class="card-text"><b>Price: </b>
+                                    {% if listing.current_bid %}
+                                        {% if listing.current_bid.price >= 1000 %}
+                                            ${{ listing.current_bid.price|floatformat:2|intcomma }}
+                                        {% else %}
+                                            ${{ listing.current_bid.price|floatformat:2 }}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if listing.starting_bid >= 1000 %}
+                                            ${{ listing.starting_bid|floatformat:2|intcomma }}
+                                        {% else %}
+                                            ${{ listing.starting_bid|floatformat:2 }}
+                                        {% endif %}
+                                    {% endif %}
+                                </p>
+
+                                <p class="card-text"><small class="text-body-secondary">{{ listing.date_listed }}</small></p>
+                                <a href="{% url 'listing' listing.id %}" class="btn btn-dark">View full listing</a>
+                            </div>
+                {% if listing.image %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <br>
+        {% if watchlist %}
+            Your watchlist is currently empty.
+        {% else %}
+            There are no active listings at this moment. Check again later.
+        {% endif %}
+    {% endif %}
+{% endblock %}

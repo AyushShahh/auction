@@ -1,0 +1,45 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}
+    List an item for Auction
+{% endblock %}
+
+{% block body %}
+    <h3>Create new listing</h3>
+
+    {% if message %}
+        <div class="alert alert-danger d-inline-block" role="alert">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form action="{% url 'create' %}" method="post">
+        {% csrf_token %}
+        <div class="form-floating mb-3">
+            <input required autofocus class="form-control" type="text" id="title" name="title" placeholder="Item name" maxlength="40">
+            <label for="title">Title</label>
+        </div>
+        <div class="form-floating mb-3">
+            <textarea required class="form-control" type="text" id="desc" name="description" placeholder="Item description" maxlength="250" style="height: 100px"></textarea>
+            <label for="desc">Description</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="number" required step="0.01" class="form-control" id="price" name="starting_bid" placeholder="Starting price..." min="0.00" max="999999999.99">
+            <label for="price">Starting Bid</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="url" class="form-control" id="image" name="image" placeholder="URL">
+            <label for="image">Image URL (optional)</label>
+        </div>
+        <div class="form-floating mb-3">
+            <select class="form-control" id="categories" name="category" style="cursor: pointer;">
+                <option value="">None</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+            <label for="categories">Category (optional)</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+{% endblock %}

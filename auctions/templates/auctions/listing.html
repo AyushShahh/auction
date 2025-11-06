@@ -1,0 +1,197 @@
+{% extends 'auctions/layout.html' %}
+
+{% block title %}
+    {{ listing }}
+{% endblock %}
+
+{% block body %}
+    {% if message %}
+        <div class="alert alert-{{ alert_type }} d-inline-block" role="alert">
+            {{ message }}
+        </div>
+        &nbsp;
+    {% endif %}
+    {% if not listing.active %}
+        {% if listing.winner == user %}
+            <div class="alert alert-success d-inline-block" role="alert">
+                Congratulations! You have won this Auction.
+            </div>
+        {% else %}
+            <div class="alert alert-warning d-inline-block" role="alert">
+                This listing is closed and is no longer active.
+            </div>
+        {% endif %}
+    {% endif %}
+    
+    {% if listing %}
+        {% load humanize %}
+        <h1 class="mb-3"><b><u>{{ listing.title }}</u></b></h1>
+
+        {% if watchlist %}
+            <h6 class="mb-2"><span class="badge text-bg-dark">Watchlist</span></h6>
+        {% endif %}
+
+        {% if listing.image %}
+            <img src="{{ listing.image }}" class="img-fluid rounded mr-4 w-25" alt="{{ listing.description }}">
+            <br><br>
+        {% endif %}
+        <p class="w-75">{{ listing.description }}</p>
+        
+        {% if user.is_authenticated %}
+            <form action="{% url 'listing' listing.id %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="watchlist" value="meow">
+                <button type="submit" class="btn btn-dark btn-sm mb-3">
+                    {% if watchlist %}
+                        Remove from watchlist&nbsp;
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" fill="currentColor" class="bi bi-bookmarks" viewBox="0 0 16 16">
+                            <path d="M2 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v11.5a.5.5 0 0 1-.777.416L7 13.101l-4.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v10.566l3.723-2.482a.5.5 0 0 1 .554 0L11 14.566V4a1 1 0 0 0-1-1z"/>
+                            <path d="M4.268 1H12a1 1 0 0 1 1 1v11.768l.223.148A.5.5 0 0 0 14 13.5V2a2 2 0 0 0-2-2H6a2 2 0 0 0-1.732 1"/>
+                        </svg>
+                    {% else %}
+                        Add to watchlist&nbsp;
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" fill="currentColor" class="bi bi-bookmarks-fill" viewBox="0 0 18 18">
+                            <path d="M2 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v11.5a.5.5 0 0 1-.777.416L7 13.101l-4.223 2.815A.5.5 0 0 1 2 15.5z"/>
+                            <path d="M4.268 1A2 2 0 0 1 6 0h6a2 2 0 0 1 2 2v11.5a.5.5 0 0 1-.777.416L13 13.768V2a1 1 0 0 0-1-1z"/>
+                        </svg>
+                    {% endif %}
+                </button>
+            </form>
+        {% endif %}
+        
+        <p class="text-secondary small mb-0">
+            {% if listing.active %}
+                {% if not user.is_authenticated %}
+                    Sign in or register to bid.
+                {% elif listing.owner == user %}
+                    This is the current bidding price of your item
+                {% elif listing.current_bid %}
+                    {{ number_of_bids }} bids(s) so far. 
+                    {% if listing.current_bid.user == user %}
+                        Your bid is the current bid.
+                    {% endif %}
+                {% else %}
+                    No bids have been made on this listing yet. Be the first one to bid!
+                {% endif %}
+            {% elif listing.current_bid %}
+                The item was sold at
+            {% else %}
+                The item was left unsold
+            {% endif %}
+        </p>
+        <div class="display-6">
+            {% if listing.current_bid %}
+                <div class="d-flex">
+                    {% if listing.current_bid.price >= 1000 %}
+                        ${{ listing.current_bid.price|floatformat:2|intcomma }}
+                    {% else %}
+                        ${{ listing.current_bid.price|floatformat:2 }}
+                    {% endif %}
+                    &nbsp;
+                    <h3><span class="badge text-bg-success mt-2">↑ {{ increase }}%</span></h3>
+                </div>
+            {% else %}
+                {% if listing.starting_bid >= 1000 %}
+                    ${{ listing.starting_bid|floatformat:2|intcomma }}
+                {% else %}
+                    ${{ listing.starting_bid|floatformat:2 }}
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated and listing.active %}
+            <form action="{% url 'listing' listing.id %}" method="post">
+                {% csrf_token %}
+
+                {% if user == listing.owner %}
+                    <button type="submit" class="btn btn-danger mt-3">Close at this price</button>
+                {% else %}
+                    <div class="my-3">
+                        <input type="number" required step="0.01" class="form-control" id="bid" name="bid" placeholder="Bid" min='{{ price|add:1}}' max="999999999.99">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Place Bid</button>
+                {% endif %}
+            </form>
+        {% endif %}
+
+        <hr>
+        <h3>Details</h3>
+        <ul>
+            <li>
+                Listed by: <strong>{{ listing.owner }}</strong>
+                {% if user == listing.owner %}
+                    (You)
+                {% endif %}
+            </li>
+            <li>
+                Status:
+                {% if listing.active %}
+                    <span class="badge text-bg-success">Active</span>
+                {% else %}
+                    <span class="badge text-bg-warning">Inactive</span>
+                {% endif %}
+            </li>
+            {% if user.is_authenticated %}
+                <li>
+                    {% if listing.winner %}
+                        Winner: <strong>{{ listing.winner }}</strong>
+                        {% if user == listing.winner %}
+                            (You)
+                        {% endif %}
+                    {% elif listing.current_bid %}
+                        Current bid by: <strong>{{ listing.current_bid.user }}</strong>
+                        {% if user == listing.current_bid.user %}
+                            (You)
+                        {% endif %}
+                    {% else %}
+                        No bids made on this listing
+                    {% endif %}
+                </li>
+            {% endif %}
+            <li>Starting bid: 
+                {% if listing.starting_bid >= 1000 %}
+                    ${{ listing.starting_bid|floatformat:2|intcomma }}
+                {% else %}
+                    ${{ listing.starting_bid|floatformat:2 }}
+                {% endif %}
+            </li>
+            <li>
+                Category: 
+                {% if listing.category %}
+                    {{ listing.category }}
+                {% else %}
+                    No category listed
+                {% endif %}
+            </li>
+            <li>Date listed: {{ listing.date_listed }}</li>
+        </ul>
+        <hr>
+        <h4>Comments</h4>
+        {% if no_of_comments %}
+            <p class="text-secondary small">{{ no_of_comments }} comment(s) made so far</p>
+        {% endif %}
+        {% if user.is_authenticated %}
+            <form action="{% url 'listing' listing.id %}" method="post">
+                {% csrf_token %}
+                <div class="my-3 d-flex">
+                    <input required autocomplete="off" class="form-control" type="comment" id="comment" name="comment" placeholder="Add your comment..." maxlength="100">
+                    &nbsp;&nbsp;&nbsp;<button type="submit" class="btn btn-dark">Comment</button>
+                </div>
+            </form>
+        {% endif %}
+        <div class="overflow-y-auto" style="height: 300px;">
+            {% if comments %}
+                {% for comment in comments %}
+                    <div class="card border-light" style="border-radius: 0px;">
+                        <div class="card-body border-light">
+                            <div class="d-flex"><h6 class="mb-0">{{ comment.user }}</h6> &nbsp;&nbsp; <p class="text-secondary mb-0" style="font-size: smaller;">{{ comment.timestamp }}</p></div>
+                            <p class="card-text">{{ comment.text }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No comments have been made yet. Be the first one to comment.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
